@@ -7,18 +7,24 @@ const OPEN_TASKS_URL =
   'https://crm.zoho.eu/crm/org20113389182/tab/Tasks/custom-view/971606000000269292/kanban';
 
 async function login(page: Page): Promise<void> {
+  if (page.url().includes('crm.zoho.eu')) return;
   await page.goto(ENV.signinUrl);
   if (!page.url().includes('accounts.zoho.eu')) return;
+  if (!page.url().includes('/signin')) {
+    const skipBtn = page.getByRole('button', { name: 'Пропустити зараз' });
+    await skipBtn.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {});
+    if (await skipBtn.isVisible()) await skipBtn.click();
+    await page.waitForURL(/crm\.zoho\.eu/, { timeout: 15_000 });
+    return;
+  }
   await page.getByRole('textbox', { name: 'Email address or mobile number' }).fill(ENV.username);
   await page.getByRole('textbox', { name: 'Enter password' }).fill(ENV.password);
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   const skipButton = page.getByRole('button', { name: 'Пропустити зараз' });
-  await skipButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-  if (await skipButton.isVisible()) {
-    await skipButton.click();
-  }
-  await expect(page).toHaveURL(/crm\.zoho\.eu/);
+  await skipButton.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {});
+  if (await skipButton.isVisible()) await skipButton.click();
+  await page.waitForURL(/crm\.zoho\.eu/, { timeout: 15_000 });
 }
 
 test.describe('Data Consistency', () => {
@@ -33,7 +39,7 @@ test.describe('Data Consistency', () => {
     await expect(page).toHaveURL(/\/Tasks\/create/);
 
     await page.getByRole('textbox', { name: 'Subject' }).fill('Persistence Test Task');
-    await page.getByPlaceholder('dd.mm.yyyy').fill('30.04.2026');
+    await page.getByRole('textbox', { name: 'Due Date' }).fill('30.04.2026');
     await page.getByRole('combobox', { name: 'High' }).click();
     await page.getByText('Normal', { exact: true }).click();
     await page.getByRole('textbox', { name: 'Description' }).fill('Persistence check description');

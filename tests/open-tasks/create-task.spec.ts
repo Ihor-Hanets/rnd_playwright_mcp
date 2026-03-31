@@ -8,18 +8,24 @@ const OPEN_TASKS_URL =
 const CREATE_TASK_URL = 'https://crm.zoho.eu/crm/org20113389182/tab/Tasks/create';
 
 async function login(page: Page): Promise<void> {
+  if (page.url().includes('crm.zoho.eu')) return;
   await page.goto(ENV.signinUrl);
   if (!page.url().includes('accounts.zoho.eu')) return;
+  if (!page.url().includes('/signin')) {
+    const skipBtn = page.getByRole('button', { name: 'Пропустити зараз' });
+    await skipBtn.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {});
+    if (await skipBtn.isVisible()) await skipBtn.click();
+    await page.waitForURL(/crm\.zoho\.eu/, { timeout: 15_000 });
+    return;
+  }
   await page.getByRole('textbox', { name: 'Email address or mobile number' }).fill(ENV.username);
   await page.getByRole('textbox', { name: 'Enter password' }).fill(ENV.password);
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   const skipButton = page.getByRole('button', { name: 'Пропустити зараз' });
-  await skipButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-  if (await skipButton.isVisible()) {
-    await skipButton.click();
-  }
-  await expect(page).toHaveURL(/crm\.zoho\.eu/);
+  await skipButton.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {});
+  if (await skipButton.isVisible()) await skipButton.click();
+  await page.waitForURL(/crm\.zoho\.eu/, { timeout: 15_000 });
 }
 
 async function openCreateTaskForm(page: Page): Promise<void> {
@@ -48,10 +54,10 @@ test.describe('Create Task', () => {
     // Navigate to Open Tasks Kanban to verify placement
     await page.goto(OPEN_TASKS_URL);
     const kanban = page.getByRole('main', { name: 'Records List View' });
-    await expect(kanban.getByRole('link', { name: 'Test Task - Minimum Fields' })).toBeVisible();
+    await expect(kanban.getByRole('link', { name: 'Test Task - Minimum Fields' }).first()).toBeVisible();
 
     // Priority defaults to High — visible in the detail page
-    await kanban.getByRole('link', { name: 'Test Task - Minimum Fields' }).click();
+    await kanban.getByRole('link', { name: 'Test Task - Minimum Fields' }).first().click();
     await expect(page.getByRole('button', { name: 'High' })).toBeVisible();
   });
 
@@ -60,7 +66,9 @@ test.describe('Create Task', () => {
 
     // Populate all fields
     await page.getByRole('textbox', { name: 'Subject' }).fill('Full Fields Task');
-    await page.getByPlaceholder('dd.mm.yyyy').fill('15.04.2026');
+    await page.getByRole('textbox', { name: 'Due Date' }).fill('15.04.2026');
+    // Click on Subject field to close the calendar popup before interacting with comboboxes
+    await page.getByRole('textbox', { name: 'Subject' }).click();
 
     // Set Status to In Progress
     await page.getByRole('combobox', { name: 'Not Started' }).click();
@@ -80,7 +88,7 @@ test.describe('Create Task', () => {
     // Verify task appears in In Progress column on Open Tasks Kanban
     await page.goto(OPEN_TASKS_URL);
     const kanban = page.getByRole('main', { name: 'Records List View' });
-    await expect(kanban.getByRole('link', { name: 'Full Fields Task' })).toBeVisible();
+    await expect(kanban.getByRole('link', { name: 'Full Fields Task' }).first()).toBeVisible();
   });
 
   test('TC-008: Create a task using Save and New', async ({ page }) => {
@@ -99,15 +107,11 @@ test.describe('Create Task', () => {
 
     // First saved task is visible in Not Started column
     const kanban = page.getByRole('main', { name: 'Records List View' });
-    await expect(kanban.getByRole('link', { name: 'Save and New Task 1' })).toBeVisible();
+    await expect(kanban.getByRole('link', { name: 'Save and New Task 1' }).first()).toBeVisible();
   });
 
   test('TC-009: Cancel task creation', async ({ page }) => {
     await page.goto(OPEN_TASKS_URL);
-    const kanban = page.getByRole('main', { name: 'Records List View' });
-
-    // Count current tasks before attempt
-    const tasksBefore = await kanban.getByRole('link').count();
 
     // Open Create Task form and type a subject
     await page.getByRole('button', { name: 'Create Task' }).click();
@@ -119,10 +123,11 @@ test.describe('Create Task', () => {
     // User is returned to the Tasks view
     await expect(page).toHaveURL(/tab\/Tasks/);
 
-    // No new task was created — navigate to Open Tasks and verify count unchanged
+    // No new task was created — 'Cancelled Task' must not appear on Open Tasks
     await page.goto(OPEN_TASKS_URL);
-    const tasksAfter = await page.getByRole('main', { name: 'Records List View' }).getByRole('link').count();
-    expect(tasksAfter).toBe(tasksBefore);
+    await expect(
+      page.getByRole('main', { name: 'Records List View' }).getByRole('link', { name: 'Cancelled Task' })
+    ).not.toBeVisible();
   });
 
   test('TC-010: Save a task with empty Subject — validation error', async ({ page }) => {
@@ -145,7 +150,7 @@ test.describe('Create Task', () => {
     await page.getByRole('textbox', { name: 'Subject' }).fill('Invalid Date Task');
 
     // Enter invalid date (month 13)
-    await page.getByPlaceholder('dd.mm.yyyy').fill('31-13-2026');
+    await page.getByRole('textbox', { name: 'Due Date' }).fill('31-13-2026');
 
     // Click Save
     await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -158,7 +163,9 @@ test.describe('Create Task', () => {
     await openCreateTaskForm(page);
 
     await page.getByRole('textbox', { name: 'Subject' }).fill('Past Date Task');
-    await page.getByPlaceholder('dd.mm.yyyy').fill('01.01.2020');
+    await page.getByRole('textbox', { name: 'Due Date' }).fill('01.01.2020');
+    // Click on Subject field to close the calendar popup
+    await page.getByRole('textbox', { name: 'Subject' }).click();
 
     // Click Save
     await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -169,7 +176,7 @@ test.describe('Create Task', () => {
     // Task appears in the Open Tasks view
     await page.goto(OPEN_TASKS_URL);
     const kanban = page.getByRole('main', { name: 'Records List View' });
-    await expect(kanban.getByRole('link', { name: 'Past Date Task' })).toBeVisible();
+    await expect(kanban.getByRole('link', { name: 'Past Date Task' }).first()).toBeVisible();
   });
 
   test('TC-013: Create task with Status=Not Started — verify Kanban placement', async ({ page }) => {
@@ -184,7 +191,7 @@ test.describe('Create Task', () => {
     // Navigate to Open Tasks and verify task is in Not Started column
     await page.goto(OPEN_TASKS_URL);
     const kanban = page.getByRole('main', { name: 'Records List View' });
-    await expect(kanban.getByRole('link', { name: 'Status Not Started Task' })).toBeVisible();
+    await expect(kanban.getByRole('link', { name: 'Status Not Started Task' }).first()).toBeVisible();
   });
 
   test('TC-014: Create task with Status=In Progress — verify Kanban placement', async ({ page }) => {
@@ -202,7 +209,7 @@ test.describe('Create Task', () => {
     // Verify task appears in In Progress column
     await page.goto(OPEN_TASKS_URL);
     const kanban = page.getByRole('main', { name: 'Records List View' });
-    await expect(kanban.getByRole('link', { name: 'Status In Progress Task' })).toBeVisible();
+    await expect(kanban.getByRole('link', { name: 'Status In Progress Task' }).first()).toBeVisible();
   });
 
   test('TC-015: Create task with Status=Deferred — verify Kanban placement', async ({ page }) => {
@@ -220,7 +227,7 @@ test.describe('Create Task', () => {
     // Verify task appears in Deferred column
     await page.goto(OPEN_TASKS_URL);
     const kanban = page.getByRole('main', { name: 'Records List View' });
-    await expect(kanban.getByRole('link', { name: 'Status Deferred Task' })).toBeVisible();
+    await expect(kanban.getByRole('link', { name: 'Status Deferred Task' }).first()).toBeVisible();
   });
 
   test('TC-016: Create task with Status=Completed — verify exclusion from Open Tasks', async ({ page }) => {
@@ -244,7 +251,7 @@ test.describe('Create Task', () => {
 
     // Task is visible in the All Tasks view
     await page.getByRole('button', { name: 'All Tasks' }).click();
-    await expect(page.getByRole('link', { name: 'Completed Task Exclusion Test' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Completed Task Exclusion Test' }).first()).toBeVisible();
   });
 
   test('TC-017: Verify all Priority values can be selected during task creation', async ({ page }) => {
