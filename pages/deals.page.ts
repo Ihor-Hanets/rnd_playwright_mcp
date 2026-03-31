@@ -23,9 +23,7 @@ export class DealsPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.successToast = page
-      .getByRole('status')
-      .or(page.locator('[class*="Toast"], [class*="toast"], [data-test-id*="toast"]').first());
+    this.successToast = page.getByRole('alert').filter({ hasText: /new deal was created/i });
     this.goToRecordLink = page.getByRole('link', { name: /go to record/i });
     this.createContactOption = page.getByRole('button', { name: /^Contact$/i });
     this.createCompanyOption = page.getByRole('button', { name: /^Company$/i });
@@ -41,7 +39,7 @@ export class DealsPage extends BasePage {
       .getByRole('button', { name: /table view|board view/i })
       .first();
     this.myDealsTab = page.getByRole('button', { name: /my deals/i });
-    this.allDealsTab = page.getByRole('button', { name: /all deals/i });
+    this.allDealsTab = page.locator('[data-test-id="view-tab-all"]').first();
     this.openSettingsSidebarButton = page
       .getByLabel(/open settings sidebar/i)
       .or(page.getByRole('button', { name: /settings sidebar/i }));
@@ -88,13 +86,14 @@ export class DealsPage extends BasePage {
   }
 
   getDealRowByName(name: string): Locator {
-    return this.page.getByRole('row').filter({ hasText: name });
+    return this.page.getByRole('row').filter({ hasText: name }).first();
   }
 
   getDealStageForRow(name: string): Locator {
     return this.getDealRowByName(name)
-      .getByRole('cell')
-      .filter({ hasText: /Pipeline/ });
+      .getByRole('button')
+      .filter({ hasText: /Pipeline/ })
+      .first();
   }
 
   getBoardCard(name: string): Locator {

@@ -2,6 +2,7 @@ node_modules/
 dist/
 playwright-report/
 test-results/
+playwright/.auth/
 .env
 *.local
 .DS_Store

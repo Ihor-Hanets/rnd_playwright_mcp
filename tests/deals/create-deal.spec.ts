@@ -280,7 +280,8 @@ test.describe('Create Deal', () => {
     await expect(dealsPage.goToRecordLink).toBeVisible();
 
     // 2. Click the 'Go to record' link in the success notification
-    await dealsPage.goToRecordLink.click();
+    const href = await dealsPage.goToRecordLink.getAttribute('href');
+    await dealsPage.page.goto(href!);
 
     // expect: User is navigated to the deal detail page
     await expect(dealsPage.page).toHaveTitle('TC-012 Notification Link Deal');

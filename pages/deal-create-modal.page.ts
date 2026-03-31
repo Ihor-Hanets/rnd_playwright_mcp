@@ -53,9 +53,9 @@ export class DealCreateModal extends BasePage {
     this.amountInput = this.frame.getByLabel(/^amount$/i);
     this.dealTypeButton = this.frame.getByRole('button', { name: /^deal type/i });
     this.priorityButton = this.frame.getByRole('button', { name: /^priority/i });
-    this.dealStageOptionsList = page.getByRole('option');
-    this.dealTypeOptionsList = page.getByRole('option');
-    this.priorityOptionsList = page.getByRole('option');
+    this.dealStageOptionsList = this.frame.locator('[role="listbox"] > [role="option"]');
+    this.dealTypeOptionsList = this.frame.locator('[role="listbox"] > [role="option"]');
+    this.priorityOptionsList = this.frame.locator('[role="listbox"] > [role="option"]');
   }
 
   async open(): Promise<void> {
@@ -90,9 +90,9 @@ export class DealCreateModal extends BasePage {
 
   async selectDealStage(stage: string): Promise<void> {
     await this.dealStageButton.click();
-    await this.page
+    await this.frame
       .getByRole('option', { name: stage })
-      .or(this.page.getByRole('button', { name: stage }))
+      .getByRole('button', { name: stage })
       .click();
   }
 
@@ -102,17 +102,17 @@ export class DealCreateModal extends BasePage {
 
   async selectDealType(type: string): Promise<void> {
     await this.dealTypeButton.click();
-    await this.page
+    await this.frame
       .getByRole('option', { name: type })
-      .or(this.page.getByRole('button', { name: type }))
+      .getByRole('button', { name: type })
       .click();
   }
 
   async selectPriority(priority: string): Promise<void> {
     await this.priorityButton.click();
-    await this.page
+    await this.frame
       .getByRole('option', { name: priority })
-      .or(this.page.getByRole('button', { name: priority }))
+      .getByRole('button', { name: priority })
       .click();
   }
 }
