@@ -45,7 +45,7 @@ export class DealsPage extends BasePage {
       .or(page.getByRole('button', { name: /settings sidebar/i }));
     this.editColumnsButton = page.getByRole('button', { name: /edit columns/i });
     this.cloneViewButton = page.getByRole('button', { name: /clone view/i });
-    this.selectAllCheckbox = page.getByRole('checkbox', { name: /select all/i });
+    this.selectAllCheckbox = page.locator('[data-test-id="checkbox-select-all"] label > span:first-child');
   }
 
   get allDealsTabButton(): Locator {
@@ -53,11 +53,12 @@ export class DealsPage extends BasePage {
   }
 
   private async getDealsListUrl(): Promise<string> {
-    // Derive from current page URL (which has the portal path after login)
-    const match = this.page.url().match(/\/(contacts\/\d+)\//);
+    const url = this.page.url();
+    // Extract portal ID from any HubSpot URL pattern (e.g. /contacts/148143933/, /global-home/148143933)
+    const match = url.match(/hubspot\.com\/[^/]+\/(\d{5,})/);
     if (match) {
       const base = ENV.baseUrl.replace(/\/$/, '');
-      return `${base}/${match[1]}/objects/0-3/views/all/list`;
+      return `${base}/contacts/${match[1]}/objects/0-3/views/all/list`;
     }
     return '';
   }

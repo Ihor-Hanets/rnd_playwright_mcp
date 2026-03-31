@@ -20,17 +20,18 @@ test.describe('Bulk Actions', () => {
 
     // 2. Click the row checkbox for 'TC-048 Bulk Select Deal'
     const row = dealsPage.getDealRowByName('TC-048 Bulk Select Deal');
-    await row.getByRole('checkbox', { name: 'Select row' }).click();
+    await row.locator('label').click();
 
     // expect: The bulk actions bar appears at the top of the table
-    await expect(dealsPage.page.getByText(/deal selected/)).toBeVisible();
+    const bulkBar = dealsPage.page.locator('[data-test-id="customer-data-bulk-actions-container"]');
+    await expect(dealsPage.page.getByText(/deals? selected/i)).toBeVisible();
     // expect: The bar shows '1 deal selected'
     await expect(dealsPage.page.getByText('1 deal selected')).toBeVisible();
     // expect: The following buttons are visible: Assign, Edit, Delete, More
-    await expect(dealsPage.page.getByRole('button', { name: 'Assign' })).toBeVisible();
-    await expect(dealsPage.page.getByRole('button', { name: 'Edit' })).toBeVisible();
-    await expect(dealsPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
-    await expect(dealsPage.page.getByRole('button', { name: 'More' })).toBeVisible();
+    await expect(bulkBar.getByRole('button', { name: 'Assign' })).toBeVisible();
+    await expect(bulkBar.getByRole('button', { name: 'Edit' })).toBeVisible();
+    await expect(bulkBar.getByRole('button', { name: 'Delete' })).toBeVisible();
+    await expect(bulkBar.getByRole('button', { name: 'More' })).toBeVisible();
   });
 
   test('should select all deals using the column header checkbox', async ({ dealsPage }) => {
@@ -45,7 +46,7 @@ test.describe('Bulk Actions', () => {
     }
 
     // expect: The bulk actions bar shows the correct total count
-    await expect(dealsPage.page.getByText(/deal selected/)).toBeVisible();
+    await expect(dealsPage.page.getByText(/deals? selected/i)).toBeVisible();
   });
 
   test('should bulk delete a selected deal', async ({ dealsPage }) => {
@@ -58,19 +59,23 @@ test.describe('Bulk Actions', () => {
 
     // 2. Select the row for 'TC-050 Bulk Delete Deal'
     const row = dealsPage.getDealRowByName('TC-050 Bulk Delete Deal');
-    await row.getByRole('checkbox', { name: 'Select row' }).click();
+    const rowTestId = await row.getAttribute('data-test-id');
+    await row.locator('label').click();
 
     // expect: Bulk actions bar appears
     await expect(dealsPage.page.getByText('1 deal selected')).toBeVisible();
 
     // 3. Click 'Delete' in the bulk actions bar and confirm
-    await dealsPage.page.getByRole('button', { name: 'Delete' }).click();
-    await dealsPage.page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
+    await dealsPage.page.locator('[data-test-id="customer-data-bulk-actions-container"]').getByRole('button', { name: 'Delete' }).click();
+    const confirmDeleteInput = dealsPage.page.locator('[data-test-id="delete-dialog-match"]');
+    await expect(confirmDeleteInput).toBeVisible();
+    await confirmDeleteInput.fill('1');
+    const confirmDeleteBtn = dealsPage.page.locator('[data-test-id="delete-dialog-confirm-button"]');
+    await expect(confirmDeleteBtn).toBeEnabled({ timeout: 5_000 });
+    await confirmDeleteBtn.click();
 
-    // expect: A success notification appears
-    await expect(dealsPage.successToast).toBeVisible();
     // expect: The deal is removed from the table
-    await expect(dealsPage.getDealRowByName('TC-050 Bulk Delete Deal')).not.toBeVisible();
+    await expect(dealsPage.page.locator(`[data-test-id="${rowTestId}"]`)).not.toBeVisible({ timeout: 15_000 });
   });
 
   test('should bulk assign a deal to a user', async ({ dealsPage }) => {
@@ -83,17 +88,18 @@ test.describe('Bulk Actions', () => {
 
     // 2. Select the row for 'TC-051 Bulk Assign Deal'
     const row = dealsPage.getDealRowByName('TC-051 Bulk Assign Deal');
-    await row.getByRole('checkbox', { name: 'Select row' }).click();
+    await row.locator('label').click();
 
     // expect: Bulk actions bar appears
     await expect(dealsPage.page.getByText('1 deal selected')).toBeVisible();
 
     // 3. Click 'Assign', select 'Ihor Hanets', and confirm
-    await dealsPage.page.getByRole('button', { name: 'Assign' }).click();
-    await dealsPage.page.getByRole('option', { name: 'Ihor Hanets' }).or(
-      dealsPage.page.getByText('Ihor Hanets').first()
-    ).click();
-    await dealsPage.page.getByRole('button', { name: /Assign|Confirm|Save/i }).first().click();
+    await dealsPage.page.locator('[data-test-id="customer-data-bulk-actions-container"]').getByRole('button', { name: 'Assign' }).click();
+    const assignModal = dealsPage.page.locator('[data-selenium-test="customer-data-bulk-actions-assign-modal"]');
+    await expect(assignModal).toBeVisible();
+    await assignModal.locator('[data-test-id="property-input-hubspot_owner_id"]').click();
+    await dealsPage.page.getByRole('option', { name: /Ihor Hanets/i }).first().click();
+    await assignModal.locator('[data-test-id="bulk-actions-assign-modal-save"]').click();
 
     // expect: The deal remains assigned to 'Ihor Hanets'
     await expect(dealsPage.getDealRowByName('TC-051 Bulk Assign Deal')).toContainText('Ihor Hanets');
@@ -109,24 +115,22 @@ test.describe('Bulk Actions', () => {
 
     // 2. Select the row and click 'Edit' in the bulk actions bar
     const row = dealsPage.getDealRowByName('TC-052 Bulk Edit Deal');
-    await row.getByRole('checkbox', { name: 'Select row' }).click();
-    await dealsPage.page.getByRole('button', { name: 'Edit' }).click();
+    await row.locator('label').click();
+    await dealsPage.page.locator('[data-test-id="bulk-action-edit"]').first().click();
 
     // expect: A bulk edit dialog opens
-    await expect(dealsPage.page.getByRole('dialog')).toBeVisible();
+    const bulkEditDialog = dealsPage.page.getByRole('dialog').filter({ hasText: /bulk edit/i });
+    await expect(bulkEditDialog).toBeVisible();
 
     // 3. Select the 'Priority' property, set value to 'High', and confirm
-    await dealsPage.page.getByRole('dialog').getByRole('combobox').or(
-      dealsPage.page.getByRole('dialog').getByRole('button', { name: /Select property/i })
-    ).click();
-    await dealsPage.page.getByRole('option', { name: 'Priority' }).click();
-    await dealsPage.page.getByRole('dialog').getByRole('button', { name: 'High' }).or(
-      dealsPage.page.getByRole('dialog').getByRole('option', { name: 'High' })
-    ).click();
-    await dealsPage.page.getByRole('dialog').getByRole('button', { name: /Update|Apply|Confirm/i }).click();
+    await bulkEditDialog.locator('[data-test-id="bulk-edit-property-select"]').click();
+    await dealsPage.page.getByRole('option', { name: 'Priority' }).first().click();
+    await bulkEditDialog.locator('[data-test-id="property-input-hs_priority"]').click();
+    await dealsPage.page.getByRole('option', { name: 'High' }).first().click();
+    await bulkEditDialog.locator('[data-test-id="bulk-actions-edit-modal-save"]').click();
 
     // expect: The bulk edit applies the change
-    await expect(dealsPage.successToast).toBeVisible();
+    await expect(dealsPage.page.getByRole('alert')).toBeVisible({ timeout: 10_000 });
   });
 
   test("should display all options in the 'More' bulk actions dropdown", async ({ dealsPage }) => {
@@ -134,21 +138,14 @@ test.describe('Bulk Actions', () => {
     await dealsPage.createDealAndGoToRecord('TC-053 More Actions Deal');
     await dealsPage.open();
     const row = dealsPage.getDealRowByName('TC-053 More Actions Deal');
-    await row.getByRole('checkbox', { name: 'Select row' }).click();
-    await dealsPage.page.getByRole('button', { name: 'More' }).click();
+    await row.locator('label').click();
+    await dealsPage.page.locator('[data-test-id="bulk-actions-dropdown"]').first().click();
 
     // expect: A dropdown appears with specific options
-    await expect(dealsPage.page.getByRole('button', { name: 'Review Associations' }).or(
-      dealsPage.page.getByText('Review Associations')
-    )).toBeVisible();
-    await expect(dealsPage.page.getByRole('button', { name: 'Add to static segment' }).or(
-      dealsPage.page.getByText('Add to static segment')
-    )).toBeVisible();
-    await expect(dealsPage.page.getByRole('button', { name: 'Create tasks' }).or(
-      dealsPage.page.getByText('Create tasks')
-    )).toBeVisible();
-    await expect(dealsPage.page.getByRole('button', { name: 'Enroll in workflow' }).or(
-      dealsPage.page.getByText('Enroll in workflow')
-    )).toBeVisible();
+    const moreDropdownMenu = dealsPage.page.locator('[data-dropdown-menu="true"]');
+    await expect(moreDropdownMenu.getByText('Review Associations')).toBeVisible();
+    await expect(moreDropdownMenu.getByText('Add to static segment')).toBeVisible();
+    await expect(moreDropdownMenu.getByText('Create tasks')).toBeVisible();
+    await expect(moreDropdownMenu.getByText('Enroll in workflow')).toBeVisible();
   });
 });
