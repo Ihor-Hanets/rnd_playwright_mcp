@@ -44,17 +44,24 @@ test.describe('Deal Actions Menu', () => {
     await dealDetailPage.actionsButton.click();
     await dealDetailPage.actionsMenu.getByRole('button', { name: 'Clone' }).click();
 
-    // expect: User is navigated to a new deal detail page (the clone)
+    // expect: Clone Deal modal opens in an iframe
+    const cloneFrame = dealDetailPage.page.frameLocator('[data-test-id="object-builder-ui-iframe"]');
+    await expect(cloneFrame.getByRole('heading', { name: 'Clone Deal' })).toBeVisible();
+
+    // 3. Submit the Clone modal
+    await cloneFrame.getByRole('button', { name: 'Clone' }).click();
+
+    // expect: User is navigated to the cloned deal detail page
     await expect(dealDetailPage.page).toHaveURL(/\/record\/0-3\//);
     // expect: The cloned deal has a name derived from the original
-    await expect(dealDetailPage.dealNameHeading).toContainText('Copy of TC-020 Original Deal');
+    await expect(dealDetailPage.dealNameHeading).toContainText('TC-020 Original Deal (clone)', { timeout: 30_000 });
 
     // 3. Navigate to the Deals list
     await dealsPage.open();
 
     // expect: Both original and cloned deal appear in the list
     await expect(dealsPage.getDealRowByName('TC-020 Original Deal')).toBeVisible();
-    await expect(dealsPage.getDealRowByName('Copy of TC-020 Original Deal')).toBeVisible();
+    await expect(dealsPage.getDealRowByName('TC-020 Original Deal (clone)')).toBeVisible();
   });
 
   test('should delete a deal via the Actions menu with confirmation', async ({ dealsPage, dealDetailPage }) => {

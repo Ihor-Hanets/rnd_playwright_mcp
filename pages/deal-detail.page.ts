@@ -58,8 +58,8 @@ export class DealDetailPage extends BasePage {
     this.priorityButton = page
       .locator('[data-property-name="hs_priority"] button')
       .or(page.getByLabel(/priority/i).locator('..').getByRole('button'));
-    this.actionsButton = page.getByRole('button', { name: /^actions$/i });
-    this.actionsMenu = page.getByRole('menu').or(page.locator('[role="menu"]'));
+    this.actionsButton = page.locator('[data-selenium-test="profile-settings-actions-btn"]');
+    this.actionsMenu = page.locator('[id^="abstractdropdown-content-"]');
     this.activitiesList = page
       .locator('[data-test-id="activity-feed"]')
       .or(page.getByRole('region', { name: /activities|timeline/i }))
