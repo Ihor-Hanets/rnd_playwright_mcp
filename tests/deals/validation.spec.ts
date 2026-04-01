@@ -30,7 +30,7 @@ test.describe('Validation and Edge Cases', () => {
     }
   });
 
-  test('should accept a valid MM/DD/YYYY close date during deal creation', async ({ dealsPage, dealCreateModal }) => {
+  test('should accept a valid MM/DD/YYYY close date during deal creation', async ({ dealsPage, dealCreateModal, dealDetailPage }) => {
     // 1. Click 'Create new' → 'Deal', enter name, clear Close date and type '06/15/2026', then click Create
     await dealsPage.openCreateDealModal();
     await dealCreateModal.fillDealName('TC-058 Date Format Test');
@@ -42,12 +42,10 @@ test.describe('Validation and Edge Cases', () => {
     await expect(dealCreateModal.heading).not.toBeVisible();
 
     // 2. Navigate to the deal's detail page
-    await dealsPage.goToRecordLink.click();
+    await dealsPage.clickGoToRecord();
 
     // expect: The Close Date field shows '06/15/2026'
-    await expect(dealsPage.page.getByRole('textbox').filter({ hasText: /06\/15\/2026/ }).or(
-      dealsPage.page.locator('input[value="06/15/2026"]')
-    )).toBeVisible();
+    await expect(dealDetailPage.closeDateInput).toHaveValue('06/15/2026');
   });
 
   test('should handle a very long deal name without crashing', async ({ dealsPage, dealCreateModal }) => {

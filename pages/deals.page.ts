@@ -134,6 +134,23 @@ export class DealsPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async clickGoToRecord(): Promise<void> {
+    await this.goToRecordLink.waitFor({ state: 'visible' });
+    const href = await this.goToRecordLink.getAttribute('href');
+    if (href) {
+      await this.page.goto(href);
+    } else {
+      await this.goToRecordLink.click({ force: true });
+    }
+    await this.waitForPageLoad();
+  }
+
+  async searchDeal(name: string): Promise<void> {
+    await this.searchInput.click();
+    await this.searchInput.fill(name);
+    await this.waitForPageLoad();
+  }
+
   async getAllDealsCount(): Promise<number> {
     const tabText = await this.allDealsTab.textContent();
     const match = tabText?.match(/(\d[\d,]*)/);

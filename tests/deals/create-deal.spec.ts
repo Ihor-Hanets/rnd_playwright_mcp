@@ -30,10 +30,11 @@ test.describe('Create Deal', () => {
     await expect(dealCreateModal.pipelineButton).toContainText('Sales Pipeline');
     // expect: Deal stage is pre-populated with 'Appointment Scheduled'
     await expect(dealCreateModal.dealStageButton).toContainText('Appointment Scheduled');
-    // expect: Close date is pre-populated with today's date
+    // expect: Close date is pre-populated with the last day of the current month
     const today = new Date();
-    const todayFormatted = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
-    await expect(dealCreateModal.closeDateInput).toHaveValue(todayFormatted);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const defaultCloseDate = `${String(endOfMonth.getMonth() + 1).padStart(2, '0')}/${String(endOfMonth.getDate()).padStart(2, '0')}/${endOfMonth.getFullYear()}`;
+    await expect(dealCreateModal.closeDateInput).toHaveValue(defaultCloseDate);
     // expect: Deal owner is pre-populated with 'Ihor Hanets'
     await expect(dealCreateModal.dealOwnerButton).toContainText('Ihor Hanets');
     // expect: The Create button is disabled
@@ -57,6 +58,7 @@ test.describe('Create Deal', () => {
 
     // 5. Navigate back to the Deals list page
     await dealsPage.open();
+    await dealsPage.searchDeal('TC-001 Required Fields Deal');
 
     // expect: The deal appears in the table with stage 'Appointment Scheduled (Sales Pipeline)'
     await expect(dealsPage.getDealRowByName('TC-001 Required Fields Deal')).toBeVisible();
@@ -108,6 +110,7 @@ test.describe('Create Deal', () => {
 
     // 8. Navigate to the deals list and find 'TC-002 Full Fields Deal'
     await dealsPage.open();
+    await dealsPage.searchDeal('TC-002 Full Fields Deal');
 
     // expect: The deal appears with stage 'Qualified To Buy (Sales Pipeline)'
     await expect(dealsPage.getDealRowByName('TC-002 Full Fields Deal')).toBeVisible();
@@ -245,6 +248,7 @@ test.describe('Create Deal', () => {
 
     // 2. Navigate to the Deals list and find the deal
     await dealsPage.open();
+    await dealsPage.searchDeal('TC-010 Closed Won Deal');
 
     // expect: The deal is listed with stage 'Closed Won (Sales Pipeline)'
     await expect(dealsPage.getDealRowByName('TC-010 Closed Won Deal')).toBeVisible();
@@ -263,6 +267,7 @@ test.describe('Create Deal', () => {
 
     // 2. Navigate to the Deals list and find the deal
     await dealsPage.open();
+    await dealsPage.searchDeal('TC-011 Closed Lost Deal');
 
     // expect: The deal is listed with stage 'Closed Lost (Sales Pipeline)'
     await expect(dealsPage.getDealRowByName('TC-011 Closed Lost Deal')).toBeVisible();
