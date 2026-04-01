@@ -24,17 +24,26 @@ test.describe('Edit Deal', () => {
     await expect(dealDetailPage.dealNameInput).toBeVisible();
 
     // 3. Clear the existing text and type new name, then save (press Enter)
+    // Listen for the save PATCH/PUT response before triggering the edit so we don't miss it
+    const nameSaveResponse = dealDetailPage.page.waitForResponse(
+      (resp) =>
+        (resp.request().method() === 'PATCH' || resp.request().method() === 'PUT') &&
+        resp.url().includes('hubspot.com') &&
+        resp.status() < 400,
+      { timeout: 10000 },
+    );
     await dealDetailPage.dealNameInput.fill('TC-013 Edited Deal Name');
-    await dealDetailPage.dealNameInput.press('Enter');
+    await dealDetailPage.dealNameInput.press('Tab');
+    await nameSaveResponse;
 
     // expect: The deal name heading updates to 'TC-013 Edited Deal Name'
     await expect(dealDetailPage.dealNameHeading).toHaveText('TC-013 Edited Deal Name');
 
-    // 4. Navigate back to the Deals list page
-    await dealsPage.open();
+    // 4. Reload the detail page to confirm the name was persisted server-side
+    await dealDetailPage.page.reload();
 
-    // expect: The deal is listed as 'TC-013 Edited Deal Name'
-    await expect(dealsPage.getDealRowByName('TC-013 Edited Deal Name')).toBeVisible();
+    // expect: The deal is still named 'TC-013 Edited Deal Name' after a full page reload
+    await expect(dealDetailPage.dealNameHeading).toHaveText('TC-013 Edited Deal Name');
   });
 
   test('should change deal stage from the deal detail page and log activity', async ({ dealsPage, dealDetailPage }) => {
@@ -45,20 +54,34 @@ test.describe('Edit Deal', () => {
     await expect(dealDetailPage.dealStageButton).toContainText('Appointment Scheduled');
 
     // 2. Click the Deal Stage dropdown and select 'Qualified To Buy'
+    // Listen for the save PATCH/PUT response before triggering the click so we don't miss it
+    const stageSaveResponse = dealDetailPage.page.waitForResponse(
+      (resp) =>
+        (resp.request().method() === 'PATCH' || resp.request().method() === 'PUT') &&
+        resp.url().includes('hubspot.com') &&
+        resp.status() < 400,
+      { timeout: 10000 },
+    );
     await dealDetailPage.dealStageButton.click();
     await dealDetailPage.page.getByRole('button', { name: 'Qualified To Buy' }).click();
+    await stageSaveResponse;
 
     // expect: The Deal Stage field updates to 'Qualified To Buy'
     await expect(dealDetailPage.dealStageButton).toContainText('Qualified To Buy');
 
-    // 3. Scroll down to the activity timeline
+    // 3. Reload to ensure the activity feed includes the new stage change entry
+    await dealDetailPage.page.reload();
     await dealDetailPage.activitiesList.scrollIntoViewIfNeeded();
 
     // expect: A new activity entry appears about stage change
-    await expect(dealDetailPage.activitiesList).toContainText('moved TC-014 Stage Change Deal to Qualified To Buy');
+    await expect(dealDetailPage.activitiesList).toContainText(/moved TC-014 Stage Change Deal.*to Qualified To Buy/);
   });
 
-  test('should edit the Amount field on the deal detail page', async ({ dealsPage, dealDetailPage }) => {
+  // TODO: The amount field in the HubSpot highlights section (data-test-id="highlight-property-display-amount") is
+  // a read-only display span (cursor: auto, no onclick). Clicking it does not reveal an editable input.
+  // There is no property-input-amount on this page. The test needs to be updated once the Amount property
+  // is added to an editable section of the deal record layout.
+  test.fixme('should edit the Amount field on the deal detail page', async ({ dealsPage, dealDetailPage }) => {
     // 1. Create a deal named 'TC-015 Amount Edit Deal' and navigate to its detail page
     await dealsPage.createDealAndGoToRecord('TC-015 Amount Edit Deal');
 
@@ -103,8 +126,17 @@ test.describe('Edit Deal', () => {
     await expect(dealDetailPage.dealTypeButton).toContainText('--');
 
     // 2. Click the Deal Type field and select 'Existing Business'
+    // Listen for the save PATCH/PUT response before triggering the click so we don't miss it
+    const dealTypeSaveResponse = dealDetailPage.page.waitForResponse(
+      (resp) =>
+        (resp.request().method() === 'PATCH' || resp.request().method() === 'PUT') &&
+        resp.url().includes('hubspot.com') &&
+        resp.status() < 400,
+      { timeout: 10000 },
+    );
     await dealDetailPage.dealTypeButton.click();
     await dealDetailPage.page.getByRole('button', { name: 'Existing Business' }).click();
+    await dealTypeSaveResponse;
 
     // expect: The Deal Type field updates to 'Existing Business'
     await expect(dealDetailPage.dealTypeButton).toContainText('Existing Business');
@@ -124,8 +156,17 @@ test.describe('Edit Deal', () => {
     await expect(dealDetailPage.priorityButton).toContainText('--');
 
     // 2. Click the Priority field and select 'Medium'
+    // Listen for the save PATCH/PUT response before triggering the click so we don't miss it
+    const prioritySaveResponse = dealDetailPage.page.waitForResponse(
+      (resp) =>
+        (resp.request().method() === 'PATCH' || resp.request().method() === 'PUT') &&
+        resp.url().includes('hubspot.com') &&
+        resp.status() < 400,
+      { timeout: 10000 },
+    );
     await dealDetailPage.priorityButton.click();
     await dealDetailPage.page.getByRole('button', { name: 'Medium' }).click();
+    await prioritySaveResponse;
 
     // expect: The Priority field updates to 'Medium'
     await expect(dealDetailPage.priorityButton).toContainText('Medium');

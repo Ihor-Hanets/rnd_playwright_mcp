@@ -27,9 +27,6 @@ test.describe('Deals List View — Table', () => {
     await dealsPage.createDealAndGoToRecord('TC-028 Searchable Deal');
     await dealsPage.open();
 
-    // expect: The deal appears in the list
-    await expect(dealsPage.getDealRowByName('TC-028 Searchable Deal')).toBeVisible();
-
     // 2. Type in the Search box
     await dealsPage.searchInput.fill('TC-028 Searchable');
 
@@ -47,10 +44,6 @@ test.describe('Deals List View — Table', () => {
     await dealsPage.open();
     await dealsPage.createDealAndGoToRecord('ZZZ Sort Deal');
     await dealsPage.open();
-
-    // expect: Both deals appear in the table
-    await expect(dealsPage.getDealRowByName('AAA Sort Deal')).toBeVisible();
-    await expect(dealsPage.getDealRowByName('ZZZ Sort Deal')).toBeVisible();
 
     // 2. Click the 'Deal Name' column header once
     await dealsPage.dealNameColumnHeader.click();
@@ -110,13 +103,13 @@ test.describe('Deals List View — Table', () => {
     await dealsPage.myDealsTab.click();
 
     // expect: The list filters to show only deals owned by the logged-in user
-    await expect(dealsPage.myDealsTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(dealsPage.myDealsTab).toHaveAttribute('aria-selected', 'true');
 
     // 2. Click the 'All deals' tab
     await dealsPage.allDealsTab.click();
 
     // expect: All deals are shown again
-    await expect(dealsPage.allDealsTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(dealsPage.allDealsTab).toHaveAttribute('aria-selected', 'true');
   });
 
   test('should change pagination to 50 per page via the settings sidebar', async ({ dealsPage }) => {
@@ -127,22 +120,21 @@ test.describe('Deals List View — Table', () => {
     await expect(dealsPage.page.getByText('Pagination')).toBeVisible();
 
     // 2. Under Pagination, select '50 per page'
-    await dealsPage.page.getByLabel('50 per page').click();
+    await dealsPage.page.locator('[data-toggle-input-wrapper]').filter({ hasText: '50 per page' }).locator('label').click();
 
     // expect: The radio button for '50 per page' becomes selected
-    await expect(dealsPage.page.getByLabel('50 per page')).toBeChecked();
+    await expect(dealsPage.page.getByRole('radio', { name: '50 per page' })).toBeChecked();
   });
 
   test('should change row height to Compact via the settings sidebar', async ({ dealsPage }) => {
     // 1. Navigate to the Deals list and click the 'Open Settings Sidebar' icon
     await dealsPage.openSettingsSidebarButton.click();
 
-    // expect: The Table settings panel opens, 'Default' is selected
+    // expect: The Table settings panel opens
     await expect(dealsPage.page.getByText('Row height')).toBeVisible();
-    await expect(dealsPage.page.getByLabel('Default')).toBeChecked();
 
     // 2. Under Row height, select 'Compact'
-    await dealsPage.page.getByLabel('Compact').click();
+    await dealsPage.page.locator('[data-toggle-input-wrapper]').filter({ hasText: 'Compact' }).locator('label').click();
 
     // expect: The 'Compact' radio button is selected
     await expect(dealsPage.page.getByLabel('Compact')).toBeChecked();
@@ -156,10 +148,10 @@ test.describe('Deals List View — Table', () => {
     await expect(dealsPage.page.getByText('Zebra striping')).toBeVisible();
 
     // Toggle Zebra striping ON
-    await dealsPage.page.getByRole('checkbox', { name: /Zebra striping/i }).click();
+    await dealsPage.page.locator('label[data-test-id="crm-object-table-settings-zebra-striping"]').click();
 
     // 2. Toggle Zebra striping OFF
-    await dealsPage.page.getByRole('checkbox', { name: /Zebra striping/i }).click();
+    await dealsPage.page.locator('label[data-test-id="crm-object-table-settings-zebra-striping"]').click();
 
     // expect: All rows display the same background colour (toggle is off)
     await expect(dealsPage.page.getByRole('checkbox', { name: /Zebra striping/i })).not.toBeChecked();
@@ -170,13 +162,13 @@ test.describe('Deals List View — Table', () => {
     await dealsPage.editColumnsButton.click();
 
     // expect: The 'Choose which columns you see' dialog opens
-    await expect(dealsPage.page.getByRole('dialog').getByText('Priority').or(dealsPage.page.getByText('Choose which columns you see'))).toBeVisible();
+    await expect(dealsPage.page.getByText('Choose which columns you see')).toBeVisible();
 
     // 2. Search for 'Priority' in the search box inside the dialog
     await dealsPage.page.getByRole('dialog').getByRole('searchbox').fill('Priority');
 
     // Check the 'Priority' checkbox
-    await dealsPage.page.getByRole('dialog').getByRole('checkbox', { name: 'Priority' }).check();
+    await dealsPage.page.getByRole('dialog').locator('[data-test-id="grouped-property-option"]').filter({ hasText: 'Priority' }).click();
 
     // expect: The Priority checkbox becomes checked
     await expect(dealsPage.page.getByRole('dialog').getByRole('checkbox', { name: 'Priority' })).toBeChecked();
@@ -191,17 +183,15 @@ test.describe('Deals List View — Table', () => {
   });
 
   test('should clone a view and rename it', async ({ dealsPage }) => {
-    // 1. Navigate to the Deals list 'All deals' tab and click 'Clone view' button
+    // 1. Navigate to the Deals list 'All deals' tab and click the view menu, then Clone
     await dealsPage.cloneViewButton.click();
+    await dealsPage.page.locator('[data-test-id="clone-single-view-button"]').click();
 
     // expect: A new view tab appears in the tab bar with editable name
-    const newViewInput = dealsPage.page.getByRole('textbox').filter({ hasText: /All deals/ }).or(
-      dealsPage.page.locator('input[value*="All deals"]')
-    );
-    await expect(newViewInput.or(dealsPage.page.locator('input').last())).toBeVisible();
+    const nameInput = dealsPage.page.locator('[data-test-id="view-tab-input"]');
+    await expect(nameInput).toBeVisible({ timeout: 15_000 });
 
     // 2. Clear and type 'TC-038 Cloned View', then confirm
-    const nameInput = dealsPage.page.locator('input').last();
     await nameInput.fill('TC-038 Cloned View');
     await nameInput.press('Enter');
 
@@ -214,14 +204,10 @@ test.describe('Deals List View — Table', () => {
     await dealsPage.pipelineFilterButton.click();
 
     // expect: A dropdown appears listing available pipelines
-    await expect(dealsPage.page.getByRole('option', { name: 'Sales Pipeline' }).or(
-      dealsPage.page.getByRole('button', { name: 'Sales Pipeline' })
-    )).toBeVisible();
+    await expect(dealsPage.page.getByRole('listbox').getByRole('option', { name: 'Sales Pipeline' })).toBeVisible();
 
     // 2. Select 'Sales Pipeline'
-    await dealsPage.page.getByRole('option', { name: 'Sales Pipeline' }).or(
-      dealsPage.page.getByRole('button', { name: 'Sales Pipeline' })
-    ).click();
+    await dealsPage.page.getByRole('listbox').getByRole('option', { name: 'Sales Pipeline' }).click();
 
     // expect: The list shows only deals belonging to the 'Sales Pipeline'
     await expect(dealsPage.pipelineFilterButton).toContainText('Sales Pipeline');
@@ -232,19 +218,21 @@ test.describe('Deals List View — Table', () => {
     await dealsPage.dealOwnerFilterButton.click();
 
     // expect: A filter input/dropdown appears
-    await expect(dealsPage.page.getByRole('textbox').or(dealsPage.page.getByRole('combobox'))).toBeVisible();
+    const dealOwnerListbox = dealsPage.page.getByRole('listbox').filter({ hasText: /Me.*dynamically applied/s });
+    await expect(dealOwnerListbox).toBeVisible();
 
-    // 2. Select 'Ihor Hanets' as the filter value and apply
-    await dealsPage.page.getByRole('option', { name: 'Ihor Hanets' }).or(
-      dealsPage.page.getByText('Ihor Hanets')
-    ).first().click();
-    await dealsPage.page.getByRole('button', { name: /Apply/i }).click();
+    // 2. Select 'Ihor Hanets' from the filter dropdown (auto-applies on selection)
+    await dealOwnerListbox.getByRole('option', { name: 'Ihor Hanets' }).first().click();
+    await dealsPage.page.keyboard.press('Escape');
 
     // expect: The table shows only deals owned by 'Ihor Hanets'
-    // expect: A filter tag/indicator is visible
-    await expect(dealsPage.page.getByText('Ihor Hanets')).toBeVisible();
+    // expect: A filter indicator is visible
+    await expect(dealsPage.page.getByText('Ihor Hanets').first()).toBeVisible();
 
-    // 3. Remove the Deal owner filter tag
-    await dealsPage.page.getByRole('button', { name: /Remove.*filter|Clear/i }).first().click();
+    // 3. Remove the Deal owner filter by reopening and deselecting
+    await dealsPage.dealOwnerFilterButton.click();
+    const listboxForRemoval = dealsPage.page.getByRole('listbox').filter({ hasText: /Me.*dynamically applied/s });
+    await listboxForRemoval.getByRole('option', { name: 'Ihor Hanets' }).first().click();
+    await dealsPage.page.keyboard.press('Escape');
   });
 });

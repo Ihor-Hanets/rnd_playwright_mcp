@@ -34,15 +34,11 @@ export class DealDetailPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.dealNameHeading = page.getByRole('heading', { level: 2 });
-    this.dealNameInput = page
-      .locator('[data-selenium-test="deal-name-input"]')
-      .or(page.locator('h2 input, h2 ~ input').first());
+    this.dealNameInput = page.getByRole('textbox', { name: /deal name/i });
     this.editNameButton = page
       .getByRole('button', { name: /edit.*name|pencil/i })
       .or(page.locator('[aria-label*="Edit"]').first());
-    this.dealStageButton = page
-      .locator('[data-test-id="deal-stage-select"] button')
-      .or(page.locator('[class*="stage"] button').first());
+    this.dealStageButton = page.locator('[data-test-id="property-input-dealstage"] button');
     this.amountField = page.locator('[data-test-id="highlight-property-display-amount"]');
     this.amountInput = page
       .locator('[data-test-id="highlight-property-input-amount"]')
@@ -50,9 +46,7 @@ export class DealDetailPage extends BasePage {
       .or(page.locator('[data-property-name="amount"] input'))
       .or(page.getByRole('spinbutton').first())
       .or(page.getByLabel(/^amount$/i));
-    this.closeDateInput = page
-      .locator('[data-property-name="closedate"] input')
-      .or(page.getByLabel(/close date/i));
+    this.closeDateInput = page.locator('[data-test-id="property-input-closedate"] input');
     this.dealTypeButton = page
       .locator('[data-property-name="dealtype"] button')
       .or(page.getByLabel(/deal type/i).locator('..').getByRole('button'));

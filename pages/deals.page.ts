@@ -20,6 +20,8 @@ export class DealsPage extends BasePage {
   readonly editColumnsButton: Locator;
   readonly cloneViewButton: Locator;
   readonly selectAllCheckbox: Locator;
+  readonly pipelineFilterButton: Locator;
+  readonly dealOwnerFilterButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -30,22 +32,22 @@ export class DealsPage extends BasePage {
     this.createDealOption = page.getByRole('button', { name: /^Deal$/i });
     this.createTicketOption = page.getByRole('button', { name: /^Ticket$/i });
     this.createTaskOption = page.getByRole('button', { name: /^Task$/i });
-    this.searchInput = page
-      .getByPlaceholder(/search/i)
-      .or(page.getByRole('searchbox'));
+    this.searchInput = page.locator('[data-test-id="search-bar"]');
     this.dealNameColumnHeader = page.getByRole('columnheader', { name: /deal name/i });
     this.closeDataColumnHeader = page.getByRole('columnheader', { name: /close date/i });
     this.viewToggleButton = page
       .getByRole('button', { name: /table view|board view/i })
       .first();
-    this.myDealsTab = page.getByRole('button', { name: /my deals/i });
+    this.myDealsTab = page.locator('[data-test-id="view-tab-my"]');
     this.allDealsTab = page.locator('[data-test-id="view-tab-all"]').first();
     this.openSettingsSidebarButton = page
       .getByLabel(/open settings sidebar/i)
       .or(page.getByRole('button', { name: /settings sidebar/i }));
     this.editColumnsButton = page.getByRole('button', { name: /edit columns/i });
-    this.cloneViewButton = page.getByRole('button', { name: /clone view/i });
+    this.cloneViewButton = page.locator('[data-test-id="view-tab-menu"]');
     this.selectAllCheckbox = page.locator('[data-test-id="checkbox-select-all"] label > span:first-child');
+    this.pipelineFilterButton = page.locator('[data-test-id="pipeline-switcher"]');
+    this.dealOwnerFilterButton = page.getByRole('button', { name: /deal owner/i });
   }
 
   get allDealsTabButton(): Locator {
@@ -64,11 +66,14 @@ export class DealsPage extends BasePage {
   }
 
   async open(): Promise<void> {
+    // Wait for any post-login redirects to settle before reading the URL
+    await this.page.waitForURL(/\/\d{5,}\//, { timeout: 15_000 }).catch(() => {});
     const url = await this.getDealsListUrl();
     if (url) {
       await this.page.goto(url);
     } else {
-      await this.page.getByRole('menuitem', { name: 'Deals' }).click();
+      await this.page.keyboard.press('Escape');
+      await this.page.getByRole('menuitem', { name: 'Deals' }).click({ force: true });
     }
     await this.waitForPageLoad();
   }
