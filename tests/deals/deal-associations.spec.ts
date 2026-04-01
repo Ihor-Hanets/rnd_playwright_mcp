@@ -39,13 +39,13 @@ test.describe('Deal Record Associations', () => {
     // 1. Create a deal named 'TC-056 Attachment Deal' and navigate to its detail page
     await dealsPage.createDealAndGoToRecord('TC-056 Attachment Deal');
 
-    // Click the 'Add' button under Attachments
+    // Click the 'Add' button under Attachments to open dropdown
     await dealDetailPage.attachmentsSection.getByRole('button', { name: 'Add' }).click();
 
-    // expect: A file upload dialog or dropzone appears
-    await expect(dealDetailPage.page.getByRole('dialog').or(
-      dealDetailPage.page.getByRole('button', { name: /upload|file/i })
-    )).toBeVisible();
+    // Click 'Your computer' option from the dropdown
+    const uploadFromComputerBtn = dealDetailPage.page.locator('[data-test-id="attachments-card-upload-from-computer-button"]');
+    await expect(uploadFromComputerBtn).toBeVisible();
+    await uploadFromComputerBtn.click();
 
     // 2. Upload a small test file
     const fileInput = dealDetailPage.page.locator('input[type="file"]');

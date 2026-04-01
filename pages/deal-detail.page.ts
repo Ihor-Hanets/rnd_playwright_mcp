@@ -43,11 +43,12 @@ export class DealDetailPage extends BasePage {
     this.dealStageButton = page
       .locator('[data-test-id="deal-stage-select"] button')
       .or(page.locator('[class*="stage"] button').first());
-    this.amountField = page
-      .locator('[data-test-id="amount-field"], [data-property-name="amount"]')
-      .or(page.getByLabel(/^amount$/i).locator('..'));
+    this.amountField = page.locator('[data-test-id="highlight-property-display-amount"]');
     this.amountInput = page
-      .locator('[data-property-name="amount"] input')
+      .locator('[data-test-id="highlight-property-input-amount"]')
+      .or(page.locator('[data-test-id="highlight-property-item-amount"] input'))
+      .or(page.locator('[data-property-name="amount"] input'))
+      .or(page.getByRole('spinbutton').first())
       .or(page.getByLabel(/^amount$/i));
     this.closeDateInput = page
       .locator('[data-property-name="closedate"] input')
@@ -75,21 +76,17 @@ export class DealDetailPage extends BasePage {
       .getByPlaceholder(/search activities/i)
       .or(page.getByRole('searchbox', { name: /search activities/i }));
     this.createTaskButton = page.getByRole('button', { name: /task/i }).first();
-    this.rightSidebar = page
-      .locator('[data-test-id="right-sidebar"]')
-      .or(page.getByRole('complementary').last());
+    this.rightSidebar = page.locator('[data-test-id="right-sidebar"]');
     this.contactsSection = page
-      .locator('[data-test-id*="contacts-association"]')
-      .or(page.locator('section').filter({ hasText: /^Contacts/ }));
+      .locator('[data-test-id="card-wrapper-ASSOCIATION_V3/0-1"]')
+      .or(page.locator('[data-test-id*="contacts-association"]'));
     this.companiesSection = page
-      .locator('[data-test-id*="companies-association"]')
-      .or(page.locator('section').filter({ hasText: /^Companies/ }));
+      .locator('[data-test-id="card-wrapper-ASSOCIATION_V3/0-2"]')
+      .or(page.locator('[data-test-id*="companies-association"]'));
     this.ticketsSection = page
-      .locator('[data-test-id*="tickets-association"]')
-      .or(page.locator('section').filter({ hasText: /^Tickets/ }));
-    this.attachmentsSection = page
-      .locator('[data-test-id*="attachments"]')
-      .or(page.locator('section').filter({ hasText: /^Attachments/ }));
+      .locator('[data-test-id="card-wrapper-ASSOCIATION_V3/0-5"]')
+      .or(page.locator('[data-test-id*="tickets-association"]'));
+    this.attachmentsSection = page.locator('[data-test-id="card-wrapper-SINGLETON/0-3/ATTACHMENTS"]');
   }
 
   async open(): Promise<void> {

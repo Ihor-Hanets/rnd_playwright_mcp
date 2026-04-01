@@ -99,8 +99,9 @@ export class DealsPage extends BasePage {
 
   getBoardCard(name: string): Locator {
     return this.page
-      .locator('[class*="card"],[class*="Card"]')
-      .filter({ hasText: name });
+      .locator('[data-test-id="cdb-card"]')
+      .filter({ hasText: name })
+      .first();
   }
 
   async switchToBoardView(): Promise<void> {

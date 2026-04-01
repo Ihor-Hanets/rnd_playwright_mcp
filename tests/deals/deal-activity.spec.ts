@@ -40,9 +40,9 @@ test.describe('Deal Activity Timeline', () => {
     // expect: A note editor appears
     await expect(dealDetailPage.noteEditor).toBeVisible();
 
-    // 3. Type note text and click Save note
+    // 3. Type note text and click Create note
     await dealDetailPage.noteEditor.fill('This is a test note for TC-024');
-    await dealDetailPage.page.getByRole('button', { name: 'Save note' }).click();
+    await dealDetailPage.page.getByRole('button', { name: 'Create note' }).click();
 
     // expect: The note appears in the activity timeline
     await expect(dealDetailPage.activitiesList).toContainText('This is a test note for TC-024');
@@ -68,8 +68,8 @@ test.describe('Deal Activity Timeline', () => {
     await expect(dealDetailPage.page.getByRole('dialog').or(dealDetailPage.page.getByLabel('Task title'))).toBeVisible();
 
     // 3. Enter title and save the task
-    await dealDetailPage.page.getByLabel('Task title').fill('TC-025 Follow up task');
-    await dealDetailPage.page.getByRole('button', { name: 'Save' }).click();
+    await dealDetailPage.page.getByPlaceholder('Enter your task').fill('TC-025 Follow up task');
+    await dealDetailPage.page.locator('[data-selenium-test="CreateTaskSidebar__save-btn"]').click();
 
     // 4. Click the 'Tasks' filter tab in the timeline
     await dealDetailPage.tasksTab.click();
@@ -85,7 +85,7 @@ test.describe('Deal Activity Timeline', () => {
     // Add a note
     await dealDetailPage.createNoteButton.click();
     await dealDetailPage.noteEditor.fill('TC-026 Test Note');
-    await dealDetailPage.page.getByRole('button', { name: 'Save note' }).click();
+    await dealDetailPage.page.getByRole('button', { name: 'Create note' }).click();
 
     // expect: The deal detail page shows multiple activities in the timeline
     await expect(dealDetailPage.allActivitiesTab).toBeVisible();
@@ -114,7 +114,7 @@ test.describe('Deal Activity Timeline', () => {
     await dealsPage.createDealAndGoToRecord('TC-027 Search Activity Deal');
     await dealDetailPage.createNoteButton.click();
     await dealDetailPage.noteEditor.fill('unique-search-keyword-TC-026');
-    await dealDetailPage.page.getByRole('button', { name: 'Save note' }).click();
+    await dealDetailPage.page.getByRole('button', { name: 'Create note' }).click();
 
     // expect: The note appears in the timeline
     await expect(dealDetailPage.activitiesList).toContainText('unique-search-keyword-TC-026');
